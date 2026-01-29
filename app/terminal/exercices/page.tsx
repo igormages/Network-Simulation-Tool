@@ -652,7 +652,7 @@ function ExerciseWorkspace({
 
             <div className="flex-1 flex">
                 {/* Left panel - Instructions, Leaderboard, Theory and Tasks */}
-                <div className="w-80 border-r border-border flex flex-col shrink-0 overflow-hidden">
+                <div className="w-80 border-r border-border flex flex-col shrink-0 h-screen sticky">
                     <ScrollArea className="flex-1">
                         <div className="p-4 space-y-6">
                             {/* Instructions */}
