@@ -620,7 +620,7 @@ function ExerciseWorkspace({
         }
       }
     }
-  }, [currentTask, currentTaskIndex, exercise.tasks.length, totalScore, onComplete]);
+  }, [currentTask, currentTaskIndex, exercise.tasks.length, totalScore, onComplete, taskResults]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
