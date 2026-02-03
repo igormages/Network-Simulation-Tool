@@ -1,9 +1,8 @@
 'use client';
 
-import React from "react"
-
-import { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import Link from 'next/link';
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { terminalExercises, type TerminalExercise, type TaskResult } from '@/lib/terminal-exercises';
 import { useAuth } from '@/lib/auth-context';
 import { useTerminalProgress } from '@/hooks/use-terminal-progress';
@@ -28,7 +27,7 @@ import {
     Play,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useExerciseProgress } from '@/hooks/use-exercise-progress'; // Import useExerciseProgress
+// import { useExerciseProgress } from '@/hooks/use-exercise-progress'; // Semble inutilisé ou redondant avec useTerminalProgress
 
 const difficultyColors = {
     debutant: 'bg-green-500/20 text-green-400 border-green-500/30',
@@ -544,360 +543,385 @@ function ExerciseWorkspace({
     onBack: () => void;
     onComplete: (score: number) => void;
 }) {
-    const [commandHistory, setCommandHistory] = useState<{ command: string; output: string }[]>([]);
-    const [currentCommand, setCurrentCommand] = useState('');
-    const [historyIndex, setHistoryIndex] = useState(-1);
-    const [taskResults, setTaskResults] = useState<TaskResult[]>([]);
-    const [currentTaskIndex, setCurrentTaskIndex] = useState(0);
-    const [showHint, setShowHint] = useState(false);
-    const [isCompleted, setIsCompleted] = useState(false);
-    const inputRef = useRef<HTMLInputElement>(null);
-    const scrollRef = useRef<HTMLDivElement>(null);
+  const [commandHistory, setCommandHistory] = useState<{ command: string; output: string }[]>([]);
+  const [currentCommand, setCurrentCommand] = useState('');
+  const [taskResults, setTaskResults] = useState<TaskResult[]>([]);
+  const [currentTaskIndex, setCurrentTaskIndex] = useState(0);
+  const [isCompleted, setIsCompleted] = useState(false);
+  const [showHint, setShowHint] = useState(false);
+  const [historyIndex, setHistoryIndex] = useState(-1);
+  const [showLeaderboard, setShowLeaderboard] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
 
-    const currentTask = exercise.tasks[currentTaskIndex];
-    const completedTasks = taskResults.filter(r => r.completed).length;
-    const totalScore = taskResults.reduce((sum, r) => sum + r.points, 0);
+  const currentTask = exercise.tasks[currentTaskIndex];
+  const completedTasks = taskResults.filter(r => r.completed).length;
+  const totalScore = taskResults.reduce((sum, r) => sum + r.points, 0);
 
-    useEffect(() => {
-        if (scrollRef.current) {
-            scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, [commandHistory]);
+
+  const handleCommand = useCallback((cmd: string) => {
+    if (!cmd.trim()) return;
+
+    const output = simulateCommand(cmd);
+    setCommandHistory(prev => [...prev, { command: cmd, output }]);
+    setCurrentCommand('');
+    setHistoryIndex(-1);
+
+    // Check if command matches current task
+    if (currentTask) {
+      const normalizedCmd = cmd.trim().toLowerCase();
+      const isCorrect = currentTask.expectedCommands.some(expected => 
+        normalizedCmd === expected.toLowerCase() ||
+        normalizedCmd.startsWith(expected.toLowerCase())
+      );
+
+      if (isCorrect) {
+        // Check if task is not already completed
+        const alreadyCompleted = taskResults.some(r => r.taskId === currentTask.id && r.completed);
+        
+        if (!alreadyCompleted) {
+          const newResult: TaskResult = {
+            taskId: currentTask.id,
+            completed: true,
+            command: cmd,
+            points: currentTask.points,
+          };
+          setTaskResults(prev => [...prev, newResult]);
+          
+          // Add success message to terminal output
+          setCommandHistory(prev => [...prev, { 
+            command: '', 
+            output: `\n✓ Tâche ${currentTaskIndex + 1} complétée ! +${currentTask.points} points\n` 
+          }]);
+          
+          if (currentTaskIndex < exercise.tasks.length - 1) {
+            setCurrentTaskIndex(prev => prev + 1);
+            setShowHint(false);
+          } else {
+            // Exercise completed
+            const finalScore = totalScore + currentTask.points;
+            setIsCompleted(true);
+            onComplete(finalScore);
+          }
         }
-    }, [commandHistory]);
+      }
+    }
+  }, [currentTask, currentTaskIndex, exercise.tasks.length, totalScore, onComplete, taskResults]);
 
-    const handleCommand = useCallback((cmd: string) => {
-        if (!cmd.trim()) return;
-
-        const output = simulateCommand(cmd);
-        setCommandHistory(prev => [...prev, { command: cmd, output }]);
-        setCurrentCommand('');
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleCommand(currentCommand);
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      if (commandHistory.length > 0) {
+        const newIndex = historyIndex < commandHistory.length - 1 ? historyIndex + 1 : historyIndex;
+        setHistoryIndex(newIndex);
+        setCurrentCommand(commandHistory[commandHistory.length - 1 - newIndex]?.command || '');
+      }
+    } else if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      if (historyIndex > 0) {
+        const newIndex = historyIndex - 1;
+        setHistoryIndex(newIndex);
+        setCurrentCommand(commandHistory[commandHistory.length - 1 - newIndex]?.command || '');
+      } else {
         setHistoryIndex(-1);
+        setCurrentCommand('');
+      }
+    }
+  };
 
-        // Check if command matches current task
-        if (currentTask) {
-            const normalizedCmd = cmd.trim().toLowerCase();
-            const isCorrect = currentTask.expectedCommands.some(expected =>
-                normalizedCmd === expected.toLowerCase() ||
-                normalizedCmd.startsWith(expected.toLowerCase())
-            );
+  return (
+    <div className="h-screen bg-background flex flex-col">
+      <header className="h-14 border-b border-border bg-card flex items-center justify-between px-4 shrink-0">
+        <div className="flex items-center gap-4">
+          <Button variant="ghost" size="sm" onClick={onBack}>
+            <ArrowLeft className="w-4 h-4 mr-1" />
+            Retour
+          </Button>
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
+              <span className="text-sm font-bold text-primary">{exercise.number}</span>
+            </div>
+            <span className="font-semibold text-foreground">{exercise.title}</span>
+          </div>
+        </div>
+        <div className="flex items-center gap-4">
+          <div className="text-sm text-muted-foreground">
+            Tache {currentTaskIndex + 1}/{exercise.tasks.length}
+          </div>
+          <div className="text-sm font-medium">
+            Score: <span className="text-primary">{totalScore}/{exercise.maxScore}</span>
+          </div>
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => setShowLeaderboard(true)}
+            className="gap-2"
+          >
+            <Trophy className="w-4 h-4" />
+            Palmares
+          </Button>
+        </div>
+      </header>
 
-            if (isCorrect) {
-                const newResult: TaskResult = {
-                    taskId: currentTask.id,
-                    completed: true,
-                    command: cmd,
-                    points: currentTask.points,
-                };
-                setTaskResults(prev => [...prev, newResult]);
-
-                if (currentTaskIndex < exercise.tasks.length - 1) {
-                    setCurrentTaskIndex(prev => prev + 1);
-                    setShowHint(false);
-                } else {
-                    // Exercise completed
-                    const finalScore = totalScore + currentTask.points;
-                    setIsCompleted(true);
-                    onComplete(finalScore);
-                }
-            }
-        }
-    }, [currentTask, currentTaskIndex, exercise.tasks.length, totalScore, onComplete]);
-
-    const handleKeyDown = (e: React.KeyboardEvent) => {
-        if (e.key === 'Enter') {
-            handleCommand(currentCommand);
-        } else if (e.key === 'ArrowUp') {
-            e.preventDefault();
-            if (commandHistory.length > 0) {
-                const newIndex = historyIndex < commandHistory.length - 1 ? historyIndex + 1 : historyIndex;
-                setHistoryIndex(newIndex);
-                setCurrentCommand(commandHistory[commandHistory.length - 1 - newIndex]?.command || '');
-            }
-        } else if (e.key === 'ArrowDown') {
-            e.preventDefault();
-            if (historyIndex > 0) {
-                const newIndex = historyIndex - 1;
-                setHistoryIndex(newIndex);
-                setCurrentCommand(commandHistory[commandHistory.length - 1 - newIndex]?.command || '');
-            } else {
-                setHistoryIndex(-1);
-                setCurrentCommand('');
-            }
-        }
-    };
-
-    return (
-        <div className="h-screen bg-background flex flex-col">
-            <header className="h-14 border-b border-border bg-card flex items-center justify-between px-4 shrink-0">
-                <div className="flex items-center gap-4">
-                    <Button variant="ghost" size="sm" onClick={onBack}>
-                        <ArrowLeft className="w-4 h-4 mr-1" />
-                        Retour
-                    </Button>
-                    <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
-                            <span className="text-sm font-bold text-primary">{exercise.number}</span>
-                        </div>
-                        <span className="font-semibold text-foreground">{exercise.title}</span>
-                    </div>
-                </div>
-                <div className="flex items-center gap-4">
-                    <div className="text-sm text-muted-foreground">
-                        Tache {currentTaskIndex + 1}/{exercise.tasks.length}
-                    </div>
-                    <div className="text-sm font-medium">
-                        Score: <span className="text-primary">{totalScore}/{exercise.maxScore}</span>
-                    </div>
-                </div>
-            </header>
-
-            <div className="flex-1 flex">
-                {/* Left panel - Instructions, Leaderboard, Theory and Tasks */}
-                <div className="w-80 border-r border-border flex flex-col shrink-0 h-screen sticky">
-                    <ScrollArea className="flex-1">
-                        <div className="p-4 space-y-6">
-                            {/* Instructions */}
-                            <Card className="bg-secondary/30 border-border">
-                                <CardHeader className="pb-2">
-                                    <CardTitle className="flex items-center gap-2 text-sm">
-                                        <Lightbulb className="w-4 h-4 text-yellow-500" />
-                                        Instructions
-                                    </CardTitle>
-                                </CardHeader>
-                                <CardContent className="space-y-3">
-                                    <div className="flex gap-2">
-                                        <div className="flex-shrink-0">
-                                            <div className="flex items-center justify-center w-5 h-5 rounded-full bg-primary/20 text-primary text-xs font-bold">
-                                                1
-                                            </div>
-                                        </div>
-                                        <div>
-                                            <p className="text-xs font-medium text-foreground">Lisez la tâche</p>
-                                            <p className="text-[11px] text-muted-foreground">Comprenez ce qui est demandé</p>
-                                        </div>
-                                    </div>
-                                    <div className="flex gap-2">
-                                        <div className="flex-shrink-0">
-                                            <div className="flex items-center justify-center w-5 h-5 rounded-full bg-primary/20 text-primary text-xs font-bold">
-                                                2
-                                            </div>
-                                        </div>
-                                        <div>
-                                            <p className="text-xs font-medium text-foreground">Saisissez la commande</p>
-                                            <p className="text-[11px] text-muted-foreground">Dans le terminal ci-dessous</p>
-                                        </div>
-                                    </div>
-                                    <div className="flex gap-2">
-                                        <div className="flex-shrink-0">
-                                            <div className="flex items-center justify-center w-5 h-5 rounded-full bg-primary/20 text-primary text-xs font-bold">
-                                                3
-                                            </div>
-                                        </div>
-                                        <div>
-                                            <p className="text-xs font-medium text-foreground">Validez votre réponse</p>
-                                            <p className="text-[11px] text-muted-foreground">Accumulez des points</p>
-                                        </div>
-                                    </div>
-                                </CardContent>
-                            </Card>
-
-                            {/* Leaderboard */}
-                            <Leaderboard />
-                        </div>
-                    </ScrollArea>
-
-                    {/* Tabs for Tasks and Theory */}
-                    <Tabs defaultValue="tasks" className="flex-1 flex flex-col border-t border-border">
-                        <TabsList className="w-full rounded-none border-b border-border">
-                            <TabsTrigger value="tasks" className="flex-1">Taches</TabsTrigger>
-                            <TabsTrigger value="theory" className="flex-1">Theorie</TabsTrigger>
-                        </TabsList>
-                        <TabsContent value="tasks" className="flex-1 m-0 overflow-hidden">
-                            <ScrollArea className="h-full">
-                                <div className="p-4 space-y-4">
-                                    {exercise.tasks.map((task, index) => {
-                                        const result = taskResults.find(r => r.taskId === task.id);
-                                        const isCurrent = index === currentTaskIndex;
-                                        const isPast = index < currentTaskIndex;
-
-                                        return (
-                                            <div
-                                                key={task.id}
-                                                className={cn(
-                                                    'p-3 rounded-lg border transition-colors',
-                                                    result?.completed
-                                                        ? 'bg-green-500/10 border-green-500/30'
-                                                        : isCurrent
-                                                            ? 'bg-primary/10 border-primary/30'
-                                                            : 'bg-muted/30 border-border'
-                                                )}
-                                            >
-                                                <div className="flex items-start gap-2">
-                                                    <div className={cn(
-                                                        'w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 mt-0.5',
-                                                        result?.completed
-                                                            ? 'bg-green-500/20 text-green-400'
-                                                            : isCurrent
-                                                                ? 'bg-primary/20 text-primary'
-                                                                : 'bg-muted text-muted-foreground'
-                                                    )}>
-                                                        {result?.completed ? <CheckCircle2 className="w-4 h-4" /> : index + 1}
-                                                    </div>
-                                                    <div className="flex-1 min-w-0">
-                                                        <p className={cn(
-                                                            'text-sm',
-                                                            result?.completed ? 'text-green-400' : isCurrent ? 'text-foreground' : 'text-muted-foreground'
-                                                        )}>
-                                                            {task.instruction}
-                                                        </p>
-                                                        {result?.completed && (
-                                                            <p className="text-xs text-green-400/70 mt-1 font-mono">
-                                                                {result.command}
-                                                            </p>
-                                                        )}
-                                                        <div className="flex items-center justify-between mt-2">
-                                                            <span className="text-xs text-muted-foreground">{task.points} pts</span>
-                                                            {isCurrent && task.hint && (
-                                                                <Button
-                                                                    variant="ghost"
-                                                                    size="sm"
-                                                                    className="h-6 px-2 text-xs"
-                                                                    onClick={() => setShowHint(!showHint)}
-                                                                >
-                                                                    <Lightbulb className="w-3 h-3 mr-1" />
-                                                                    Indice
-                                                                </Button>
-                                                            )}
-                                                        </div>
-                                                        {isCurrent && showHint && task.hint && (
-                                                            <div className="mt-2 p-2 bg-yellow-500/10 border border-yellow-500/30 rounded text-xs text-yellow-400">
-                                                                {task.hint}
-                                                            </div>
-                                                        )}
-                                                        {isCurrent && !result?.completed && (
-                                                            <div className="mt-2 p-2 bg-blue-500/10 border border-blue-500/30 rounded text-xs text-blue-300">
-                                                                <p className="font-semibold mb-1">Commande(s) attendue(s):</p>
-                                                                <code className="font-mono">{task.expectedCommands.join(' ou ')}</code>
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        );
-                                    })}
-
-                                    {isCompleted && (
-                                        <div className="p-4 bg-green-500/10 border border-green-500/30 rounded-lg text-center space-y-2">
-                                            <Trophy className="w-8 h-8 text-green-400 mx-auto" />
-                                            <p className="font-semibold text-green-400">Exercice termine!</p>
-                                            <p className="text-sm text-muted-foreground">
-                                                Score final: {totalScore}/{exercise.maxScore}
-                                            </p>
-                                        </div>
-                                    )}
-                                </div>
-                            </ScrollArea>
-                        </TabsContent>
-                        <TabsContent value="theory" className="flex-1 m-0 overflow-hidden">
-                            <ScrollArea className="h-full">
-                                <div className="p-4 space-y-4">
-                                    {exercise.theory.map((section, index) => (
-                                        <div key={index} className="space-y-2">
-                                            <h3 className="font-semibold text-foreground flex items-center gap-2">
-                                                <BookOpen className="w-4 h-4 text-primary" />
-                                                {section.title}
-                                            </h3>
-                                            <p className="text-sm text-muted-foreground whitespace-pre-line">
-                                                {section.content}
-                                            </p>
-                                            {section.keyPoints.length > 0 && (
-                                                <ul className="space-y-1 mt-2">
-                                                    {section.keyPoints.map((point, i) => (
-                                                        <li key={i} className="text-xs text-muted-foreground flex items-start gap-2">
-                                                            <span className="text-primary mt-0.5">•</span>
-                                                            {point}
-                                                        </li>
-                                                    ))}
-                                                </ul>
-                                            )}
-                                        </div>
-                                    ))}
-                                </div>
-                            </ScrollArea>
-                        </TabsContent>
-                    </Tabs>
-                </div>
-
-                {/* Terminal */}
-                <div className="flex-1 flex flex-col bg-[#0a0a0a] min-w-0">
-                    <div className="h-8 bg-[#1a1a1a] border-b border-[#333] flex items-center px-3 gap-2 shrink-0">
-                        <div className="w-3 h-3 rounded-full bg-red-500" />
-                        <div className="w-3 h-3 rounded-full bg-yellow-500" />
-                        <div className="w-3 h-3 rounded-full bg-green-500" />
-                        <span className="ml-2 text-xs text-gray-400">Terminal - Exercice {exercise.number}</span>
-                    </div>
-
-                    <ScrollArea className="flex-1 p-4" ref={scrollRef}>
-                        <div className="font-mono text-sm space-y-1">
-                            <div className="text-green-400">
-                                NetSim Terminal v1.0 - Exercice: {exercise.title}
-                            </div>
-                            <div className="text-gray-500">Tapez vos commandes ci-dessous. Tapez 'help' pour l'aide.</div>
-                            <div className="text-gray-500 mb-4">---</div>
-
-                            {commandHistory.map((entry, index) => (
-                                <div key={index} className="mb-2">
-                                    <div className="flex items-center gap-2">
-                                        <span className="text-green-400">user@netsim</span>
-                                        <span className="text-gray-500">:</span>
-                                        <span className="text-blue-400">~</span>
-                                        <span className="text-gray-500">$</span>
-                                        <span className="text-white">{entry.command}</span>
-                                    </div>
-                                    <pre className="text-gray-300 whitespace-pre-wrap ml-0 mt-1">{entry.output}</pre>
-                                </div>
-                            ))}
-
-                            {isCompleted && (
-                                <div className="mt-6 p-4 border border-green-500/50 rounded bg-green-500/10">
-                                    <div className="text-green-400 font-semibold mb-2">✓ Exercice validé!</div>
-                                    <div className="text-green-400 text-sm">
-                                        Score final: {totalScore}/{exercise.maxScore} points
-                                    </div>
-                                    <div className="text-gray-400 text-xs mt-2">Vous pouvez retourner à la liste des exercices.</div>
-                                </div>
-                            )}
-                        </div>
-                    </ScrollArea>
-
-                    <div
+      <div className="flex-1 flex overflow-hidden">
+        {/* Left panel - Tasks and Theory at top, Instructions and Leaderboard at bottom */}
+        <div className="w-80 border-r border-border flex flex-col shrink-0 overflow-hidden">
+          {/* Tabs for Tasks and Theory - NOW AT TOP */}
+          <Tabs defaultValue="tasks" className="flex-1 flex flex-col border-b border-border overflow-hidden">
+            <TabsList className="w-full rounded-none border-b border-border">
+              <TabsTrigger value="tasks" className="flex-1">Taches</TabsTrigger>
+              <TabsTrigger value="theory" className="flex-1">Theorie</TabsTrigger>
+            </TabsList>
+            <TabsContent value="tasks" className="flex-1 m-0 overflow-hidden">
+              <ScrollArea className="h-full w-full">
+                <div className="p-4 space-y-4 w-full">
+                  {exercise.tasks.map((task, index) => {
+                    const result = taskResults.find(r => r.taskId === task.id);
+                    const isCurrent = index === currentTaskIndex;
+                    const isPast = index < currentTaskIndex;
+                    
+                    return (
+                      <div
+                        key={task.id}
                         className={cn(
-                            "border-t border-[#333] p-4 shrink-0",
-                            isCompleted && "opacity-50 pointer-events-none"
+                          'p-3 rounded-lg border transition-colors',
+                          result?.completed
+                            ? 'bg-green-500/10 border-green-500/30'
+                            : isCurrent
+                              ? 'bg-primary/10 border-primary/30'
+                              : 'bg-muted/30 border-border'
                         )}
-                        onClick={() => inputRef.current?.focus()}
-                    >
-                        <div className="flex items-center gap-2 font-mono text-sm">
-                            <span className="text-green-400">user@netsim</span>
-                            <span className="text-gray-500">:</span>
-                            <span className="text-blue-400">~</span>
-                            <span className="text-gray-500">$</span>
-                            <input
-                                ref={inputRef}
-                                type="text"
-                                value={currentCommand}
-                                onChange={(e) => setCurrentCommand(e.target.value)}
-                                onKeyDown={handleKeyDown}
-                                disabled={isCompleted}
-                                className="flex-1 bg-transparent text-white outline-none disabled:opacity-50"
-                                placeholder={isCompleted ? "Exercice complété" : "Tapez une commande..."}
-                                autoFocus
-                            />
+                      >
+                        <div className="flex items-start gap-2">
+                          <div className={cn(
+                            'w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 mt-0.5',
+                            result?.completed
+                              ? 'bg-green-500/20 text-green-400'
+                              : isCurrent
+                                ? 'bg-primary/20 text-primary'
+                                : 'bg-muted text-muted-foreground'
+                          )}>
+                            {result?.completed ? <CheckCircle2 className="w-4 h-4" /> : index + 1}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className={cn(
+                              'text-sm',
+                              result?.completed ? 'text-green-400' : isCurrent ? 'text-foreground' : 'text-muted-foreground'
+                            )}>
+                              {task.instruction}
+                            </p>
+                            {result?.completed && (
+                              <p className="text-xs text-green-400/70 mt-1 font-mono">
+                                {result.command}
+                              </p>
+                            )}
+                            <div className="flex items-center justify-between mt-2">
+                              <span className="text-xs text-muted-foreground">{task.points} pts</span>
+                              {isCurrent && task.hint && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-6 px-2 text-xs"
+                                  onClick={() => setShowHint(!showHint)}
+                                >
+                                  <Lightbulb className="w-3 h-3 mr-1" />
+                                  Indice
+                                </Button>
+                              )}
+                            </div>
+                            {isCurrent && showHint && task.hint && (
+                              <div className="mt-2 p-2 bg-yellow-500/10 border border-yellow-500/30 rounded text-xs text-yellow-400">
+                                {task.hint}
+                              </div>
+                            )}
+                            {isCurrent && !result?.completed && (
+                              <div className="mt-2 p-2 bg-blue-500/10 border border-blue-500/30 rounded text-xs text-blue-300">
+                                <p className="font-semibold mb-1">Commande(s) attendue(s):</p>
+                                <code className="font-mono">{task.expectedCommands.join(' ou ')}</code>
+                              </div>
+                            )}
+                          </div>
                         </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </ScrollArea>
+            </TabsContent>
+            <TabsContent value="theory" className="flex-1 m-0 overflow-hidden">
+              <ScrollArea className="h-full w-full">
+                <div className="p-4 space-y-4 w-full">
+                  {exercise.theory.map((section, index) => (
+                    <div key={index} className="space-y-2">
+                      <h3 className="font-semibold text-foreground flex items-center gap-2">
+                        <BookOpen className="w-4 h-4 text-primary" />
+                        {section.title}
+                      </h3>
+                      <p className="text-sm text-muted-foreground whitespace-pre-line">
+                        {section.content}
+                      </p>
+                      {section.keyPoints.length > 0 && (
+                        <ul className="space-y-1 mt-2">
+                          {section.keyPoints.map((point, i) => (
+                            <li key={i} className="text-xs text-muted-foreground flex items-start gap-2">
+                              <span className="text-primary mt-0.5">•</span>
+                              {point}
+                            </li>
+                          ))}
+                        </ul>
+                      )}
                     </div>
+                  ))}
+                </div>
+              </ScrollArea>
+            </TabsContent>
+          </Tabs>
+
+          {/* Instructions and Leaderboard - NOW AT BOTTOM */}
+          <ScrollArea className="flex-1 w-full border-t border-border">
+            <div className="p-4 space-y-6 w-full">
+              {/* Instructions */}
+              <Card className="bg-secondary/30 border-border">
+                <CardHeader className="pb-2">
+                  <CardTitle className="flex items-center gap-2 text-sm">
+                    <Lightbulb className="w-4 h-4 text-yellow-500" />
+                    Instructions
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="flex gap-2">
+                    <div className="flex-shrink-0">
+                      <div className="flex items-center justify-center w-5 h-5 rounded-full bg-primary/20 text-primary text-xs font-bold">
+                        1
+                      </div>
+                    </div>
+                    <div>
+                      <p className="text-xs font-medium text-foreground">Lisez la tâche</p>
+                      <p className="text-[11px] text-muted-foreground">Comprenez ce qui est demandé</p>
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <div className="flex-shrink-0">
+                      <div className="flex items-center justify-center w-5 h-5 rounded-full bg-primary/20 text-primary text-xs font-bold">
+                        2
+                      </div>
+                    </div>
+                    <div>
+                      <p className="text-xs font-medium text-foreground">Saisissez la commande</p>
+                      <p className="text-[11px] text-muted-foreground">Dans le terminal ci-dessous</p>
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <div className="flex-shrink-0">
+                      <div className="flex items-center justify-center w-5 h-5 rounded-full bg-primary/20 text-primary text-xs font-bold">
+                        3
+                      </div>
+                    </div>
+                    <div>
+                      <p className="text-xs font-medium text-foreground">Validez votre réponse</p>
+                      <p className="text-[11px] text-muted-foreground">Accumulez des points</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+            </div>
+          </ScrollArea>
+        </div>
+
+        {/* Terminal */}
+        <div className="flex-1 flex flex-col bg-[#0a0a0a] min-w-0">
+            <div className="h-8 bg-[#1a1a1a] border-b border-[#333] flex items-center px-3 gap-2 shrink-0">
+                <div className="w-3 h-3 rounded-full bg-red-500" />
+                <div className="w-3 h-3 rounded-full bg-yellow-500" />
+                <div className="w-3 h-3 rounded-full bg-green-500" />
+                <span className="ml-2 text-xs text-gray-400">Terminal - Exercice {exercise.number}</span>
+            </div>
+
+            <ScrollArea className="flex-1 p-4" ref={scrollRef}>
+                <div className="font-mono text-sm space-y-1">
+                    <div className="text-green-400">
+                        NetSim Terminal v1.0 - Exercice: {exercise.title}
+                    </div>
+                    <div className="text-gray-500">Tapez vos commandes ci-dessous. Tapez 'help' pour l'aide.</div>
+                    <div className="text-gray-500 mb-4">---</div>
+
+                    {commandHistory.map((entry, index) => (
+                        <div key={index} className="mb-2">
+                            <div className="flex items-center gap-2">
+                                <span className="text-green-400">user@netsim</span>
+                                <span className="text-gray-500">:</span>
+                                <span className="text-blue-400">~</span>
+                                <span className="text-gray-500">$</span>
+                                <span className="text-white">{entry.command}</span>
+                            </div>
+                            <pre className="text-gray-300 whitespace-pre-wrap ml-0 mt-1">{entry.output}</pre>
+                        </div>
+                    ))}
+
+                    {isCompleted && (
+                        <div className="mt-6 p-4 border border-green-500/50 rounded bg-green-500/10">
+                            <div className="text-green-400 font-semibold mb-2">✓ Exercice validé!</div>
+                            <div className="text-green-400 text-sm">
+                                Score final: {totalScore}/{exercise.maxScore} points
+                            </div>
+                            <div className="text-gray-400 text-xs mt-2">Vous pouvez retourner à la liste des exercices.</div>
+                        </div>
+                    )}
+                </div>
+            </ScrollArea>
+
+            <div
+                className={cn(
+                    "border-t border-[#333] p-4 shrink-0",
+                    isCompleted && "opacity-50 pointer-events-none"
+                )}
+                onClick={() => inputRef.current?.focus()}
+            >
+                <div className="flex items-center gap-2 font-mono text-sm">
+                    <span className="text-green-400">user@netsim</span>
+                    <span className="text-gray-500">:</span>
+                    <span className="text-blue-400">~</span>
+                    <span className="text-gray-500">$</span>
+                    <input
+                        ref={inputRef}
+                        type="text"
+                        value={currentCommand}
+                        onChange={(e) => setCurrentCommand(e.target.value)}
+                        onKeyDown={handleKeyDown}
+                        disabled={isCompleted}
+                        className="flex-1 bg-transparent text-white outline-none disabled:opacity-50"
+                        placeholder={isCompleted ? "Exercice complété" : "Tapez une commande..."}
+                        autoFocus
+                    />
                 </div>
             </div>
         </div>
-    );
+      </div>
+
+      {/* Leaderboard Sheet */}
+      <Sheet open={showLeaderboard} onOpenChange={setShowLeaderboard}>
+        <SheetContent side="right" className="w-96">
+          <SheetHeader>
+            <SheetTitle className="flex items-center gap-2">
+              <Trophy className="w-5 h-5 text-primary" />
+              Palmares
+            </SheetTitle>
+          </SheetHeader>
+          <div className="mt-4">
+            <Leaderboard />
+          </div>
+        </SheetContent>
+      </Sheet>
+    </div>
+  );
 }
 
 // Main Page Component
