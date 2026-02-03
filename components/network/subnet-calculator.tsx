@@ -64,7 +64,7 @@ export function SubnetCalculator({ isOpen, onClose }: SubnetCalculatorProps) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
-      <div className="w-full max-w-2xl bg-card border border-border rounded-lg shadow-xl overflow-hidden">
+      <div className="w-full max-w-2xl bg-card border border-border rounded-lg shadow-xl ">
         <div className="flex items-center justify-between p-4 border-b border-border">
           <h2 className="text-lg font-semibold text-foreground">Calculateur de Sous-reseau</h2>
           <Button variant="ghost" size="sm" onClick={onClose}>

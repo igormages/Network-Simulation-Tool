@@ -21,13 +21,13 @@ export default function NetworkSimulator() {
 
   return (
     <NetworkProvider>
-      <div className="h-screen flex flex-col bg-background overflow-hidden">
+      <div className="h-screen flex flex-col bg-background ">
         <Header
           onOpenInfo={() => setInfoOpen(true)}
           onOpenCalculator={() => setCalculatorOpen(true)}
         />
 
-        <div className="flex-1 flex overflow-hidden">
+        <div className="flex-1 flex ">
           {/* Left Sidebar - Device Palette and Instructions */}
           <aside className="w-56 border-r border-border bg-card overflow-y-auto">
             <div className="p-4 space-y-6">
@@ -85,8 +85,8 @@ export default function NetworkSimulator() {
           </aside>
 
           {/* Main Content */}
-          <main className="flex-1 flex flex-col overflow-hidden min-h-0">
-            <div className="flex-1 overflow-hidden">
+          <main className="flex-1 flex flex-col  min-h-0">
+            <div className="flex-1 ">
               <NetworkCanvas />
             </div>
             <ConsolePanel />

@@ -83,7 +83,7 @@ export function ConfigPanel() {
   }
 
   return (
-    <div className="w-80 border-l border-border bg-card flex flex-col overflow-hidden">
+    <div className="w-80 border-l border-border bg-card flex flex-col ">
       <div className="p-4 border-b border-border flex items-center gap-3">
         <DeviceIcon type={selectedDevice.type} size={32} />
         <div className="flex-1 min-w-0">
@@ -92,7 +92,7 @@ export function ConfigPanel() {
         </div>
       </div>
 
-      <Tabs defaultValue="general" className="flex-1 flex flex-col overflow-hidden">
+      <Tabs defaultValue="general" className="flex-1 flex flex-col ">
         <TabsList className="w-full justify-start rounded-none border-b border-border bg-transparent p-0">
           <TabsTrigger value="general" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary">
             General
