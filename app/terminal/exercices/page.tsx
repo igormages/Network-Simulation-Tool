@@ -580,22 +580,33 @@ function ExerciseWorkspace({
       );
 
       if (isCorrect) {
-        const newResult: TaskResult = {
-          taskId: currentTask.id,
-          completed: true,
-          command: cmd,
-          points: currentTask.points,
-        };
-        setTaskResults(prev => [...prev, newResult]);
+        // Check if task is not already completed
+        const alreadyCompleted = taskResults.some(r => r.taskId === currentTask.id && r.completed);
         
-        if (currentTaskIndex < exercise.tasks.length - 1) {
-          setCurrentTaskIndex(prev => prev + 1);
-          setShowHint(false);
-        } else {
-          // Exercise completed
-          const finalScore = totalScore + currentTask.points;
-          setIsCompleted(true);
-          onComplete(finalScore);
+        if (!alreadyCompleted) {
+          const newResult: TaskResult = {
+            taskId: currentTask.id,
+            completed: true,
+            command: cmd,
+            points: currentTask.points,
+          };
+          setTaskResults(prev => [...prev, newResult]);
+          
+          // Add success message to terminal output
+          setCommandHistory(prev => [...prev, { 
+            command: '', 
+            output: `\n✓ Tâche ${currentTaskIndex + 1} complétée ! +${currentTask.points} points\n` 
+          }]);
+          
+          if (currentTaskIndex < exercise.tasks.length - 1) {
+            setCurrentTaskIndex(prev => prev + 1);
+            setShowHint(false);
+          } else {
+            // Exercise completed
+            const finalScore = totalScore + currentTask.points;
+            setIsCompleted(true);
+            onComplete(finalScore);
+          }
         }
       }
     }
