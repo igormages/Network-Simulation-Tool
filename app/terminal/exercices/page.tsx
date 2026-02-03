@@ -667,15 +667,6 @@ function ExerciseWorkspace({
           <div className="text-sm font-medium">
             Score: <span className="text-primary">{totalScore}/{exercise.maxScore}</span>
           </div>
-          <Button 
-            variant="outline" 
-            size="sm"
-            onClick={() => setShowLeaderboard(true)}
-            className="gap-2"
-          >
-            <Trophy className="w-4 h-4" />
-            Palmares
-          </Button>
         </div>
       </header>
 
@@ -854,8 +845,8 @@ function ExerciseWorkspace({
             <span className="ml-2 text-xs text-gray-400">Terminal - Exercice {exercise.number}</span>
           </div>
 
-          <ScrollArea className="flex-1 min-h-0" ref={scrollRef}>
-            <div className="font-mono text-sm space-y-1 p-4 pb-0">
+          <div className="flex-1 min-h-0 overflow-y-auto flex flex-col-reverse p-4" ref={scrollRef}>
+            <div className="font-mono text-sm space-y-1">
               <div className="text-green-400">
                 NetSim Terminal v1.0 - Exercice: {exercise.title}
               </div>
@@ -877,15 +868,15 @@ function ExerciseWorkspace({
 
               {isCompleted && (
                 <div className="mt-6 p-4 border border-green-500/50 rounded bg-green-500/10">
-                  <div className="text-green-400 font-semibold mb-2">✓ Exercice validé!</div>
+                  <div className="text-green-400 font-semibold mb-2">Exercice valide!</div>
                   <div className="text-green-400 text-sm">
                     Score final: {totalScore}/{exercise.maxScore} points
                   </div>
-                  <div className="text-gray-400 text-xs mt-2">Vous pouvez retourner à la liste des exercices.</div>
+                  <div className="text-gray-400 text-xs mt-2">Vous pouvez retourner a la liste des exercices.</div>
                 </div>
               )}
             </div>
-          </ScrollArea>
+          </div>
 
           <div 
             className={cn(
