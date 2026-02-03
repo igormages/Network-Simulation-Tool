@@ -7,7 +7,6 @@ import Link from 'next/link';
 import { terminalExercises, type TerminalExercise, type TaskResult } from '@/lib/terminal-exercises';
 import { useAuth } from '@/lib/auth-context';
 import { useTerminalProgress } from '@/hooks/use-terminal-progress';
-import { Leaderboard } from '@/components/network/leaderboard';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -812,8 +811,6 @@ function ExerciseWorkspace({
                 </CardContent>
               </Card>
 
-              {/* Leaderboard */}
-              <Leaderboard />
             </div>
           </ScrollArea>
         </div>
