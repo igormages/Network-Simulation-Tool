@@ -85,7 +85,7 @@ export function ExerciseWorkspace({ exercise, onBack, onSelectExercise }: Exerci
   };
 
   return (
-    <div className="h-screen flex flex-col overflow-hidden">
+    <div className="h-screen flex flex-col ">
       {/* Header */}
       <header className="h-12 border-b border-border bg-card flex items-center justify-between px-4 flex-shrink-0">
         <div className="flex items-center gap-3">
@@ -117,9 +117,9 @@ export function ExerciseWorkspace({ exercise, onBack, onSelectExercise }: Exerci
       </header>
 
       {/* Main Content */}
-      <div className="flex-1 flex overflow-hidden min-h-0">
+      <div className="flex-1 flex  min-h-0">
         {/* Left Sidebar - Device Palette + Instructions + Leaderboard */}
-        <aside className="w-56 border-r border-border flex flex-col overflow-hidden bg-card">
+        <aside className="w-56 border-r border-border flex flex-col  bg-card">
           <div className="p-4 space-y-6 overflow-y-auto flex-1">
             {/* Device Palette */}
             <DevicePalette />
@@ -175,9 +175,9 @@ export function ExerciseWorkspace({ exercise, onBack, onSelectExercise }: Exerci
         </aside>
 
         {/* Center - Split View */}
-        <div className="flex-1 flex overflow-hidden min-h-0">
+        <div className="flex-1 flex  min-h-0">
           {/* Target Topology (Left) */}
-          <div className="w-1/2 border-r border-border flex flex-col overflow-hidden">
+          <div className="w-1/2 border-r border-border flex flex-col ">
             {showSolution ? (
               <SolutionView exercise={exercise} />
             ) : (
@@ -186,14 +186,14 @@ export function ExerciseWorkspace({ exercise, onBack, onSelectExercise }: Exerci
           </div>
 
           {/* User Workspace (Right) */}
-          <div className="w-1/2 flex flex-col relative overflow-hidden">
+          <div className="w-1/2 flex flex-col relative ">
             <NetworkCanvas />
             <PacketAnimationLayer />
           </div>
         </div>
 
         {/* Right Sidebar - Exercise Panel & Config */}
-        <aside className="w-80 border-l border-border flex flex-col overflow-hidden">
+        <aside className="w-80 border-l border-border flex flex-col ">
           <div className="flex-1 overflow-y-auto">
             {selectedDevice ? (
               <ConfigPanel />

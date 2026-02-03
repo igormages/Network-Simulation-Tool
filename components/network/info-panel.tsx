@@ -19,7 +19,7 @@ export function InfoPanel({ isOpen, onClose }: InfoPanelProps) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
-      <div className="w-full max-w-3xl max-h-[80vh] bg-card border border-border rounded-lg shadow-xl overflow-hidden flex flex-col">
+      <div className="w-full max-w-3xl max-h-[80vh] bg-card border border-border rounded-lg shadow-xl  flex flex-col">
         <div className="flex items-center justify-between p-4 border-b border-border">
           <h2 className="text-lg font-semibold text-foreground">Guide des Notions Reseau</h2>
           <Button variant="ghost" size="sm" onClick={onClose}>

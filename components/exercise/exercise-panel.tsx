@@ -173,7 +173,7 @@ export function ExercisePanel({ exercise, onBack, onNextExercise }: ExercisePane
         )}
       </div>
 
-      <Tabs defaultValue="objectives" className="flex-1 flex flex-col overflow-hidden">
+      <Tabs defaultValue="objectives" className="flex-1 flex flex-col ">
         <TabsList className="mx-4 mt-2 grid grid-cols-3">
           <TabsTrigger value="objectives" className="text-xs">
             <Target className="w-3 h-3 mr-1" />

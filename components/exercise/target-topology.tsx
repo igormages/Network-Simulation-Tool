@@ -24,7 +24,7 @@ export function TargetTopology({ exercise }: TargetTopologyProps) {
         <p className="text-xs text-muted-foreground">Reproduisez cette topologie</p>
       </div>
 
-      <div className="flex-1 relative bg-canvas overflow-hidden">
+      <div className="flex-1 relative bg-canvas ">
         {/* Grid pattern */}
         <div 
           className="absolute inset-0"

@@ -171,7 +171,7 @@ export function NetworkCanvas() {
       <div
         ref={canvasRef}
         className={cn(
-          'flex-1 relative overflow-hidden cursor-crosshair',
+          'flex-1 relative  cursor-crosshair',
           'bg-canvas',
           showGrid && 'bg-[linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:20px_20px]'
         )}

@@ -296,9 +296,9 @@ Address: 142.251.41.14`;
         </div>
       </header>
 
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex-1 flex ">
         {/* Left panel - Instructions and Tasks */}
-        <div className="w-80 border-r border-border flex flex-col shrink-0 overflow-hidden">
+        <div className="w-80 border-r border-border flex flex-col shrink-0 ">
           <ScrollArea className="flex-1">
             <div className="p-4 space-y-6">
               {/* Instructions */}
@@ -352,12 +352,12 @@ Address: 142.251.41.14`;
           </ScrollArea>
 
           {/* Tabs for Tasks and Theory */}
-          <Tabs defaultValue="tasks" className="flex-1 flex flex-col border-t border-border overflow-hidden">
+          <Tabs defaultValue="tasks" className="flex-1 flex flex-col border-t border-border ">
             <TabsList className="w-full rounded-none border-b border-border">
               <TabsTrigger value="tasks" className="flex-1">Taches</TabsTrigger>
               <TabsTrigger value="theory" className="flex-1">Theorie</TabsTrigger>
             </TabsList>
-            <TabsContent value="tasks" className="flex-1 m-0 overflow-hidden">
+            <TabsContent value="tasks" className="flex-1 m-0 ">
               <ScrollArea className="h-full w-full">
                 <div className="p-4 space-y-4 w-full">
                   {exercise.tasks.map((task, index) => {
@@ -442,7 +442,7 @@ Address: 142.251.41.14`;
                 </div>
               </ScrollArea>
             </TabsContent>
-            <TabsContent value="theory" className="flex-1 m-0 overflow-hidden">
+            <TabsContent value="theory" className="flex-1 m-0 ">
               <ScrollArea className="h-full w-full">
                 <div className="p-4 space-y-4 w-full">
                   {exercise.theory.map((section, index) => (
