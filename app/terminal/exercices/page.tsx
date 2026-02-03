@@ -755,7 +755,7 @@ function ExerciseWorkspace({
                 </div>
               </ScrollArea>
             </TabsContent>
-            <TabsContent value="theory" className="flex-1 m-0 overflow-hidden">
+            <TabsContent value="theory" className="flex-1 m-0">
               <ScrollArea className="h-full w-full">
                 <div className="p-4 space-y-4 w-full">
                   {exercise.theory.map((section, index) => (
