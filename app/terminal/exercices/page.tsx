@@ -1,5 +1,13 @@
 'use client';
 
+import { SheetTitle } from "@/components/ui/sheet"
+
+import { SheetHeader } from "@/components/ui/sheet"
+
+import { SheetContent } from "@/components/ui/sheet"
+
+import { Sheet } from "@/components/ui/sheet"
+
 import React from "react"
 
 import { useState, useRef, useEffect, useCallback } from 'react';
@@ -7,6 +15,7 @@ import Link from 'next/link';
 import { terminalExercises, type TerminalExercise, type TaskResult } from '@/lib/terminal-exercises';
 import { useAuth } from '@/lib/auth-context';
 import { useTerminalProgress } from '@/hooks/use-terminal-progress';
+import { Leaderboard } from '@/components/network/leaderboard';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -545,11 +554,12 @@ function ExerciseWorkspace({
 }) {
   const [commandHistory, setCommandHistory] = useState<{ command: string; output: string }[]>([]);
   const [currentCommand, setCurrentCommand] = useState('');
-  const [historyIndex, setHistoryIndex] = useState(-1);
   const [taskResults, setTaskResults] = useState<TaskResult[]>([]);
   const [currentTaskIndex, setCurrentTaskIndex] = useState(0);
-  const [showHint, setShowHint] = useState(false);
   const [isCompleted, setIsCompleted] = useState(false);
+  const [showHint, setShowHint] = useState(false);
+  const [historyIndex, setHistoryIndex] = useState(-1);
+  const [showLeaderboard, setShowLeaderboard] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -657,6 +667,15 @@ function ExerciseWorkspace({
           <div className="text-sm font-medium">
             Score: <span className="text-primary">{totalScore}/{exercise.maxScore}</span>
           </div>
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => setShowLeaderboard(true)}
+            className="gap-2"
+          >
+            <Trophy className="w-4 h-4" />
+            Palmares
+          </Button>
         </div>
       </header>
 
@@ -895,6 +914,21 @@ function ExerciseWorkspace({
           </div>
         </div>
       </div>
+
+      {/* Leaderboard Sheet */}
+      <Sheet open={showLeaderboard} onOpenChange={setShowLeaderboard}>
+        <SheetContent side="right" className="w-96">
+          <SheetHeader>
+            <SheetTitle className="flex items-center gap-2">
+              <Trophy className="w-5 h-5 text-primary" />
+              Palmares
+            </SheetTitle>
+          </SheetHeader>
+          <div className="mt-4">
+            <Leaderboard />
+          </div>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
