@@ -63,6 +63,11 @@ export default function AllExercicesPage() {
       <TerminalExerciseWorkspace
         exercise={selectedTerminalExercise}
         onBack={() => setSelectedTerminalExercise(null)}
+        onComplete={(score, maxScore) => {
+          if (user) {
+            terminalProgress.updateExerciseScore(selectedTerminalExercise.id, score, maxScore);
+          }
+        }}
         onNextExercise={(exercise) => {
           const currentIndex = terminalExercises.findIndex(e => e.id === exercise.id);
           if (currentIndex < terminalExercises.length - 1) {

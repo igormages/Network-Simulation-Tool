@@ -22,12 +22,14 @@ interface TerminalExerciseWorkspaceProps {
   exercise: TerminalExercise;
   onBack: () => void;
   onNextExercise?: (exercise: TerminalExercise) => void;
+  onComplete?: (score: number, maxScore: number) => void;
 }
 
 export function TerminalExerciseWorkspace({
   exercise,
   onBack,
   onNextExercise,
+  onComplete,
 }: TerminalExerciseWorkspaceProps) {
   const [commandHistory, setCommandHistory] = useState<Array<{ command: string; output: string }>>([
     { command: '', output: 'NetSim Terminal v1.0 - Exercice: ' + exercise.title + '\nTapez vos commandes ci-dessous. Tapez \'help\' pour l\'aide.\n---' }
@@ -42,6 +44,13 @@ export function TerminalExerciseWorkspace({
 
   const totalScore = Object.values(completedTasks).reduce((sum, r) => sum + (r.points || 0), 0);
   const isCompleted = exercise.tasks.every(t => completedTasks[t.id]?.completed);
+
+  // Sauvegarder la progression quand l'exercice est complété
+  useEffect(() => {
+    if (isCompleted && onComplete) {
+      onComplete(totalScore, exercise.maxScore);
+    }
+  }, [isCompleted, totalScore, exercise.maxScore, onComplete]);
 
   // Auto-scroll to bottom when command history changes
   useEffect(() => {
