@@ -670,16 +670,16 @@ function ExerciseWorkspace({
         </div>
       </header>
 
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex-1 flex">
         {/* Left panel - Tasks and Theory at top, Instructions and Leaderboard at bottom */}
-        <div className="w-80 border-r border-border flex flex-col shrink-0 overflow-hidden">
+        <div className="w-80 border-r border-border flex flex-col shrink-0">
           {/* Tabs for Tasks and Theory - NOW AT TOP */}
-          <Tabs defaultValue="tasks" className="flex-1 flex flex-col border-b border-border overflow-hidden">
+          <Tabs defaultValue="tasks" className="flex-1 flex flex-col border-b border-border">
             <TabsList className="w-full rounded-none border-b border-border">
               <TabsTrigger value="tasks" className="flex-1">Taches</TabsTrigger>
               <TabsTrigger value="theory" className="flex-1">Theorie</TabsTrigger>
             </TabsList>
-            <TabsContent value="tasks" className="flex-1 m-0 overflow-hidden">
+            <TabsContent value="tasks" className="flex-1 m-0">
               <ScrollArea className="h-full w-full">
                 <div className="p-4 space-y-4 w-full">
                   {exercise.tasks.map((task, index) => {
