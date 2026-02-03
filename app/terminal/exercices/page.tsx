@@ -1,17 +1,8 @@
 'use client';
 
-import { SheetTitle } from "@/components/ui/sheet"
-
-import { SheetHeader } from "@/components/ui/sheet"
-
-import { SheetContent } from "@/components/ui/sheet"
-
-import { Sheet } from "@/components/ui/sheet"
-
-import React from "react"
-
-import { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import Link from 'next/link';
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { terminalExercises, type TerminalExercise, type TaskResult } from '@/lib/terminal-exercises';
 import { useAuth } from '@/lib/auth-context';
 import { useTerminalProgress } from '@/hooks/use-terminal-progress';
@@ -23,43 +14,43 @@ import { Progress } from '@/components/ui/progress';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
-  ArrowLeft,
-  Terminal,
-  CheckCircle2,
-  XCircle,
-  Lock,
-  ChevronRight,
-  Trophy,
-  Star,
-  Lightbulb,
-  BookOpen,
-  Play,
+    ArrowLeft,
+    Terminal,
+    CheckCircle2,
+    XCircle,
+    Lock,
+    ChevronRight,
+    Trophy,
+    Star,
+    Lightbulb,
+    BookOpen,
+    Play,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useExerciseProgress } from '@/hooks/use-exercise-progress'; // Import useExerciseProgress
+// import { useExerciseProgress } from '@/hooks/use-exercise-progress'; // Semble inutilisé ou redondant avec useTerminalProgress
 
 const difficultyColors = {
-  debutant: 'bg-green-500/20 text-green-400 border-green-500/30',
-  intermediaire: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30',
-  avance: 'bg-red-500/20 text-red-400 border-red-500/30',
+    debutant: 'bg-green-500/20 text-green-400 border-green-500/30',
+    intermediaire: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30',
+    avance: 'bg-red-500/20 text-red-400 border-red-500/30',
 };
 
 const categoryLabels = {
-  diagnostic: 'Diagnostic',
-  configuration: 'Configuration',
-  analyse: 'Analyse',
-  depannage: 'Depannage',
+    diagnostic: 'Diagnostic',
+    configuration: 'Configuration',
+    analyse: 'Analyse',
+    depannage: 'Depannage',
 };
 
 // Terminal simulation logic (same as network-terminal)
 function simulateCommand(command: string): string {
-  const cmd = command.trim().toLowerCase();
-  const parts = cmd.split(/\s+/);
-  const baseCmd = parts[0];
+    const cmd = command.trim().toLowerCase();
+    const parts = cmd.split(/\s+/);
+    const baseCmd = parts[0];
 
-  // Basic command simulations
-  const responses: Record<string, string> = {
-    'ipconfig': `
+    // Basic command simulations
+    const responses: Record<string, string> = {
+        'ipconfig': `
 Configuration IP Windows
 
 Carte Ethernet Ethernet0 :
@@ -67,7 +58,7 @@ Carte Ethernet Ethernet0 :
    Adresse IPv4. . . . . . . . . . . . . .: 192.168.1.100
    Masque de sous-reseau. . . . . . . . . : 255.255.255.0
    Passerelle par defaut. . . . . . . . . : 192.168.1.1`,
-    'ipconfig /all': `
+        'ipconfig /all': `
 Configuration IP Windows
 
    Nom de l'hote . . . . . . . . . . . . . : PC-USER
@@ -88,72 +79,72 @@ Carte Ethernet Ethernet0 :
    Serveur DHCP . . . . . . . . . . . . . : 192.168.1.1
    Serveurs DNS. . . . . . . . . . . . .  : 8.8.8.8
                                             8.8.4.4`,
-    'hostname': 'PC-USER',
-    'whoami': 'user',
-    'pwd': '/home/user',
-  };
+        'hostname': 'PC-USER',
+        'whoami': 'user',
+        'pwd': '/home/user',
+    };
 
-  // Check for exact matches first
-  if (responses[cmd]) {
-    return responses[cmd];
-  }
+    // Check for exact matches first
+    if (responses[cmd]) {
+        return responses[cmd];
+    }
 
-  // Handle ip commands
-  if (baseCmd === 'ip') {
-    if (cmd.includes('addr') || cmd.includes(' a')) {
-      if (cmd.includes('eth0')) {
-        return `2: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500
+    // Handle ip commands
+    if (baseCmd === 'ip') {
+        if (cmd.includes('addr') || cmd.includes(' a')) {
+            if (cmd.includes('eth0')) {
+                return `2: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500
     link/ether 00:1a:2b:3c:4d:5e brd ff:ff:ff:ff:ff:ff
     inet 192.168.1.100/24 brd 192.168.1.255 scope global eth0
        valid_lft forever preferred_lft forever`;
-      }
-      return `1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536
+            }
+            return `1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536
     link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
     inet 127.0.0.1/8 scope host lo
 2: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500
     link/ether 00:1a:2b:3c:4d:5e brd ff:ff:ff:ff:ff:ff
     inet 192.168.1.100/24 brd 192.168.1.255 scope global eth0`;
-    }
-    if (cmd.includes('route') || cmd === 'ip r') {
-      return `default via 192.168.1.1 dev eth0 proto dhcp metric 100
+        }
+        if (cmd.includes('route') || cmd === 'ip r') {
+            return `default via 192.168.1.1 dev eth0 proto dhcp metric 100
 192.168.1.0/24 dev eth0 proto kernel scope link src 192.168.1.100 metric 100`;
-    }
-    if (cmd.includes('link') || cmd === 'ip l') {
-      if (cmd.includes('eth0')) {
-        return `2: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500
+        }
+        if (cmd.includes('link') || cmd === 'ip l') {
+            if (cmd.includes('eth0')) {
+                return `2: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500
     link/ether 00:1a:2b:3c:4d:5e brd ff:ff:ff:ff:ff:ff`;
-      }
-      return `1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536
+            }
+            return `1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536
     link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
 2: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500
     link/ether 00:1a:2b:3c:4d:5e brd ff:ff:ff:ff:ff:ff`;
-    }
-    if (cmd.includes('neigh') || cmd.includes('neighbor')) {
-      return `192.168.1.1 dev eth0 lladdr aa:bb:cc:dd:ee:ff REACHABLE
+        }
+        if (cmd.includes('neigh') || cmd.includes('neighbor')) {
+            return `192.168.1.1 dev eth0 lladdr aa:bb:cc:dd:ee:ff REACHABLE
 192.168.1.50 dev eth0 lladdr 11:22:33:44:55:66 STALE`;
+        }
     }
-  }
 
-  // Handle ifconfig
-  if (baseCmd === 'ifconfig') {
-    if (parts[1] === 'eth0') {
-      return `eth0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+    // Handle ifconfig
+    if (baseCmd === 'ifconfig') {
+        if (parts[1] === 'eth0') {
+            return `eth0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
         inet 192.168.1.100  netmask 255.255.255.0  broadcast 192.168.1.255
         ether 00:1a:2b:3c:4d:5e  txqueuelen 1000  (Ethernet)`;
-    }
-    return `eth0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        }
+        return `eth0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
         inet 192.168.1.100  netmask 255.255.255.0  broadcast 192.168.1.255
         ether 00:1a:2b:3c:4d:5e  txqueuelen 1000  (Ethernet)
 
 lo: flags=73<UP,LOOPBACK,RUNNING>  mtu 65536
         inet 127.0.0.1  netmask 255.0.0.0
         loop  txqueuelen 1000  (Local Loopback)`;
-  }
+    }
 
-  // Handle ping
-  if (baseCmd === 'ping') {
-    const target = parts.find(p => !p.startsWith('-') && p !== 'ping') || '127.0.0.1';
-    return `
+    // Handle ping
+    if (baseCmd === 'ping') {
+        const target = parts.find(p => !p.startsWith('-') && p !== 'ping') || '127.0.0.1';
+        return `
 Envoi d'une requete 'Ping' sur ${target} avec 32 octets de donnees :
 Reponse de ${target.includes('.') ? target : '142.250.185.78'} : octets=32 temps=15 ms TTL=117
 Reponse de ${target.includes('.') ? target : '142.250.185.78'} : octets=32 temps=14 ms TTL=117
@@ -164,12 +155,12 @@ Statistiques Ping pour ${target.includes('.') ? target : '142.250.185.78'}:
     Paquets : envoyes = 4, recus = 4, perdus = 0 (perte 0%),
 Duree approximative des boucles en millisecondes :
     Minimum = 13ms, Maximum = 15ms, Moyenne = 14ms`;
-  }
+    }
 
-  // Handle tracert/traceroute
-  if (baseCmd === 'tracert' || baseCmd === 'traceroute') {
-    const target = parts.find(p => !p.startsWith('-') && p !== baseCmd) || 'google.com';
-    return `
+    // Handle tracert/traceroute
+    if (baseCmd === 'tracert' || baseCmd === 'traceroute') {
+        const target = parts.find(p => !p.startsWith('-') && p !== baseCmd) || 'google.com';
+        return `
 Determination de l'itineraire vers ${target} [142.250.185.78]
 avec un maximum de 30 sauts :
 
@@ -179,47 +170,47 @@ avec un maximum de 30 sauts :
   4    20 ms    19 ms    20 ms  142.250.185.78
 
 Itineraire determine.`;
-  }
+    }
 
-  // Handle nslookup
-  if (baseCmd === 'nslookup') {
-    const target = parts[1] || 'google.com';
-    if (target.match(/^\d+\.\d+\.\d+\.\d+$/)) {
-      return `Serveur :   dns.google
+    // Handle nslookup
+    if (baseCmd === 'nslookup') {
+        const target = parts[1] || 'google.com';
+        if (target.match(/^\d+\.\d+\.\d+\.\d+$/)) {
+            return `Serveur :   dns.google
 Address:  8.8.8.8
 
 Nom :    dns.google
 Address:  ${target}`;
-    }
-    return `Serveur :   dns.google
+        }
+        return `Serveur :   dns.google
 Address:  8.8.8.8
 
 Reponse ne faisant pas autorite :
 Nom :    ${target}
 Addresses:  142.250.185.78
           2a00:1450:4007:80e::200e`;
-  }
-
-  // Handle dig
-  if (baseCmd === 'dig') {
-    const target = parts.find(p => !p.startsWith('-') && !p.startsWith('@') && p !== 'dig' && !['mx', 'a', 'aaaa', 'ns'].includes(p.toLowerCase())) || 'google.com';
-    if (cmd.includes('-x')) {
-      return `;; ANSWER SECTION:
-8.8.8.8.in-addr.arpa.   21599   IN      PTR     dns.google.`;
     }
-    if (cmd.includes('mx')) {
-      return `;; ANSWER SECTION:
+
+    // Handle dig
+    if (baseCmd === 'dig') {
+        const target = parts.find(p => !p.startsWith('-') && !p.startsWith('@') && p !== 'dig' && !['mx', 'a', 'aaaa', 'ns'].includes(p.toLowerCase())) || 'google.com';
+        if (cmd.includes('-x')) {
+            return `;; ANSWER SECTION:
+8.8.8.8.in-addr.arpa.   21599   IN      PTR     dns.google.`;
+        }
+        if (cmd.includes('mx')) {
+            return `;; ANSWER SECTION:
 ${target}.          300     IN      MX      10 alt1.gmail-smtp-in.l.google.com.
 ${target}.          300     IN      MX      5 gmail-smtp-in.l.google.com.`;
-    }
-    return `;; ANSWER SECTION:
+        }
+        return `;; ANSWER SECTION:
 ${target}.          300     IN      A       142.250.185.78`;
-  }
+    }
 
-  // Handle netstat
-  if (baseCmd === 'netstat') {
-    if (cmd.includes('-s')) {
-      return `Statistiques IPv4
+    // Handle netstat
+    if (baseCmd === 'netstat') {
+        if (cmd.includes('-s')) {
+            return `Statistiques IPv4
 
   Paquets recus                     = 1547832
   Erreurs d'en-tete recues          = 0
@@ -233,28 +224,28 @@ Statistiques TCP pour IPv4
   Ouvertures passives               = 42
   Echecs de tentatives de connexion = 12
   Connexions reinitialises          = 89`;
-    }
-    if (cmd.includes('-l') || cmd.includes('listening')) {
-      return `Connexions actives
+        }
+        if (cmd.includes('-l') || cmd.includes('listening')) {
+            return `Connexions actives
 
   Proto  Adresse locale         Adresse distante       Etat
   TCP    0.0.0.0:80             0.0.0.0:0              LISTENING
   TCP    0.0.0.0:443            0.0.0.0:0              LISTENING
   TCP    0.0.0.0:22             0.0.0.0:0              LISTENING`;
-    }
-    return `Connexions actives
+        }
+        return `Connexions actives
 
   Proto  Adresse locale         Adresse distante       Etat
   TCP    192.168.1.100:52341    142.250.185.78:443     ESTABLISHED
   TCP    192.168.1.100:52342    151.101.1.69:443       ESTABLISHED
   TCP    0.0.0.0:80             0.0.0.0:0              LISTENING
   TCP    0.0.0.0:443            0.0.0.0:0              LISTENING`;
-  }
+    }
 
-  // Handle ss
-  if (baseCmd === 'ss') {
-    if (cmd.includes('-s')) {
-      return `Total: 285
+    // Handle ss
+    if (baseCmd === 'ss') {
+        if (cmd.includes('-s')) {
+            return `Total: 285
 TCP:   12 (estab 5, closed 0, orphaned 0, timewait 0)
 
 Transport Total     IP        IPv6
@@ -262,31 +253,31 @@ RAW       0         0         0
 UDP       8         6         2
 TCP       12        10        2
 INET      20        16        4`;
-    }
-    if (cmd.includes('-l')) {
-      return `Netid  State   Recv-Q  Send-Q  Local Address:Port   Peer Address:Port
+        }
+        if (cmd.includes('-l')) {
+            return `Netid  State   Recv-Q  Send-Q  Local Address:Port   Peer Address:Port
 tcp    LISTEN  0       128     0.0.0.0:22            0.0.0.0:*
 tcp    LISTEN  0       128     0.0.0.0:80            0.0.0.0:*
 tcp    LISTEN  0       128     0.0.0.0:443           0.0.0.0:*`;
-    }
-    return `Netid  State      Recv-Q  Send-Q  Local Address:Port       Peer Address:Port
+        }
+        return `Netid  State      Recv-Q  Send-Q  Local Address:Port       Peer Address:Port
 tcp    ESTAB      0       0       192.168.1.100:52341     142.250.185.78:443
 tcp    ESTAB      0       0       192.168.1.100:52342     151.101.1.69:443
 tcp    LISTEN     0       128     0.0.0.0:22              0.0.0.0:*`;
-  }
+    }
 
-  // Handle arp
-  if (baseCmd === 'arp') {
-    return `Interface : 192.168.1.100 --- 0x2
+    // Handle arp
+    if (baseCmd === 'arp') {
+        return `Interface : 192.168.1.100 --- 0x2
   Adresse Internet      Adresse physique      Type
   192.168.1.1           aa-bb-cc-dd-ee-ff     dynamique
   192.168.1.50          11-22-33-44-55-66     dynamique
   192.168.1.255         ff-ff-ff-ff-ff-ff     statique`;
-  }
+    }
 
-  // Handle route
-  if (baseCmd === 'route') {
-    return `===========================================================================
+    // Handle route
+    if (baseCmd === 'route') {
+        return `===========================================================================
 Liste d'Interfaces
   2...00 1a 2b 3c 4d 5e ......Intel(R) Ethernet Connection
 ===========================================================================
@@ -297,48 +288,48 @@ Itineraires actifs :
 Destination reseau    Masque reseau   Adr. passerelle   Adr. interface Metrique
           0.0.0.0          0.0.0.0      192.168.1.1    192.168.1.100     25
       192.168.1.0    255.255.255.0         On-link     192.168.1.100    281`;
-  }
+    }
 
-  // Handle cat
-  if (baseCmd === 'cat') {
-    if (cmd.includes('/etc/hosts')) {
-      return `127.0.0.1       localhost
+    // Handle cat
+    if (baseCmd === 'cat') {
+        if (cmd.includes('/etc/hosts')) {
+            return `127.0.0.1       localhost
 127.0.1.1       pc-user
 192.168.1.10    server.local
 192.168.1.20    printer.local`;
-    }
-    if (cmd.includes('/etc/resolv.conf')) {
-      return `# Generated by NetworkManager
+        }
+        if (cmd.includes('/etc/resolv.conf')) {
+            return `# Generated by NetworkManager
 nameserver 8.8.8.8
 nameserver 8.8.4.4`;
+        }
+        return `cat: fichier non trouve`;
     }
-    return `cat: fichier non trouve`;
-  }
 
-  // Handle ls
-  if (baseCmd === 'ls') {
-    if (cmd.includes('-l')) {
-      return `total 32
+    // Handle ls
+    if (baseCmd === 'ls') {
+        if (cmd.includes('-l')) {
+            return `total 32
 drwxr-xr-x 2 user user 4096 jan 15 10:00 Documents
 drwxr-xr-x 2 user user 4096 jan 15 10:00 Downloads
 -rw-r--r-- 1 user user  220 jan 15 09:00 .bashrc
 -rw-r--r-- 1 user user  807 jan 15 09:00 .profile`;
+        }
+        return `Documents  Downloads  .bashrc  .profile`;
     }
-    return `Documents  Downloads  .bashrc  .profile`;
-  }
 
-  // Handle ps
-  if (baseCmd === 'ps') {
-    return `  PID TTY          TIME CMD
+    // Handle ps
+    if (baseCmd === 'ps') {
+        return `  PID TTY          TIME CMD
     1 ?        00:00:02 systemd
   523 ?        00:00:00 sshd
   891 pts/0    00:00:00 bash
   945 pts/0    00:00:00 ps`;
-  }
+    }
 
-  // Handle help
-  if (baseCmd === 'help' || baseCmd === 'h') {
-    return `Commandes disponibles :
+    // Handle help
+    if (baseCmd === 'help' || baseCmd === 'h') {
+        return `Commandes disponibles :
     
 Diagnostic réseau:
   ipconfig              - Affiche la configuration IP
@@ -367,190 +358,190 @@ Système:
 Aide:
   help                  - Affiche cette aide
   clear                 - Efface l'écran`;
-  }
+    }
 
-  // Handle clear
-  if (baseCmd === 'clear' || baseCmd === 'cls') {
-    return '';
-  }
+    // Handle clear
+    if (baseCmd === 'clear' || baseCmd === 'cls') {
+        return '';
+    }
 
-  return `Commande '${baseCmd}' executee avec succes.`;
+    return `Commande '${baseCmd}' executee avec succes.`;
 }
 
 // Exercise Selector Component
 function ExerciseSelector({ onSelect }: { onSelect: (ex: TerminalExercise) => void }) {
-  const { updateExerciseScore, getExerciseProgress, isExerciseUnlocked, getOverallStats, isLoaded } = useTerminalProgress();
-  const stats = getOverallStats();
+    const { updateExerciseScore, getExerciseProgress, isExerciseUnlocked, getOverallStats, isLoaded } = useTerminalProgress();
+    const stats = getOverallStats();
 
-  // Filter for terminal exercises only
-  const terminalStats = {
-    completedCount: terminalExercises.filter(ex => {
-      const progress = getExerciseProgress(ex.id);
-      return progress?.completed;
-    }).length,
-    totalExercises: terminalExercises.length,
-  };
+    // Filter for terminal exercises only
+    const terminalStats = {
+        completedCount: terminalExercises.filter(ex => {
+            const progress = getExerciseProgress(ex.id);
+            return progress?.completed;
+        }).length,
+        totalExercises: terminalExercises.length,
+    };
 
-  return (
-    <div className="min-h-screen bg-background">
-      <header className="h-14 border-b border-border bg-card flex items-center px-4">
-        <Link href="/terminal" className="flex items-center gap-2 text-muted-foreground hover:text-foreground">
-          <ArrowLeft className="w-4 h-4" />
-          Retour au terminal
-        </Link>
-      </header>
+    return (
+        <div className="min-h-screen bg-background">
+            <header className="h-14 border-b border-border bg-card flex items-center px-4">
+                <Link href="/terminal" className="flex items-center gap-2 text-muted-foreground hover:text-foreground">
+                    <ArrowLeft className="w-4 h-4" />
+                    Retour au terminal
+                </Link>
+            </header>
 
-      <div className="p-6 space-y-6 max-w-6xl mx-auto">
-        <div className="text-center space-y-4">
-          <div className="flex items-center justify-center gap-2">
-            <Terminal className="w-8 h-8 text-primary" />
-            <h1 className="text-2xl font-bold text-foreground">Exercices Terminal</h1>
-          </div>
-          <p className="text-muted-foreground max-w-2xl mx-auto">
-            Pratiquez les commandes reseau dans un terminal simule. Chaque exercice vous guide
-            a travers des taches specifiques avec validation automatique.
-          </p>
-
-          <div className="max-w-md mx-auto bg-card border border-border rounded-lg p-4 space-y-3">
-            <div className="flex items-center justify-between text-sm">
-              <div className="flex items-center gap-2">
-                <Trophy className="w-4 h-4 text-primary" />
-                <span className="text-foreground font-medium">Progression Terminal</span>
-              </div>
-              <span className="text-muted-foreground">
-                {terminalStats.completedCount}/{terminalStats.totalExercises} exercices
-              </span>
-            </div>
-            <Progress value={(terminalStats.completedCount / terminalStats.totalExercises) * 100} className="h-2" />
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {terminalExercises.map((exercise) => {
-            const progress = getExerciseProgress(exercise.id);
-            const unlocked = exercise.number === 1 || 
-              terminalExercises.some(ex => 
-                ex.number === exercise.number - 1 && 
-                getExerciseProgress(ex.id)?.completed
-              );
-            const scorePercentage = progress ? Math.round((progress.bestScore / progress.maxScore) * 100) : 0;
-
-            return (
-              <Card
-                key={exercise.id}
-                className={cn(
-                  'border transition-all duration-200',
-                  unlocked
-                    ? 'bg-card border-border hover:border-primary/50 cursor-pointer group'
-                    : 'bg-muted/30 border-border/50 cursor-not-allowed opacity-60'
-                )}
-                onClick={() => unlocked && onSelect(exercise)}
-              >
-                <CardHeader className="pb-3">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="flex items-center gap-2">
-                      <div
-                        className={cn(
-                          'w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold',
-                          progress?.completed
-                            ? 'bg-green-500/20 text-green-400'
-                            : unlocked
-                              ? 'bg-primary/20 text-primary'
-                              : 'bg-muted text-muted-foreground'
-                        )}
-                      >
-                        {progress?.completed ? (
-                          <CheckCircle2 className="w-5 h-5" />
-                        ) : unlocked ? (
-                          exercise.number
-                        ) : (
-                          <Lock className="w-4 h-4" />
-                        )}
-                      </div>
-                      <CardTitle className={cn(
-                        'text-lg transition-colors',
-                        unlocked ? 'text-foreground group-hover:text-primary' : 'text-muted-foreground'
-                      )}>
-                        {exercise.title}
-                      </CardTitle>
+            <div className="p-6 space-y-6 max-w-6xl mx-auto">
+                <div className="text-center space-y-4">
+                    <div className="flex items-center justify-center gap-2">
+                        <Terminal className="w-8 h-8 text-primary" />
+                        <h1 className="text-2xl font-bold text-foreground">Exercices Terminal</h1>
                     </div>
-                  </div>
-                  <div className="flex gap-2 ml-10">
-                    <Badge variant="outline" className={difficultyColors[exercise.difficulty]}>
-                      {exercise.difficulty}
-                    </Badge>
-                    <Badge variant="secondary">
-                      {categoryLabels[exercise.category]}
-                    </Badge>
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <CardDescription className="text-muted-foreground line-clamp-2">
-                    {exercise.description}
-                  </CardDescription>
+                    <p className="text-muted-foreground max-w-2xl mx-auto">
+                        Pratiquez les commandes reseau dans un terminal simule. Chaque exercice vous guide
+                        a travers des taches specifiques avec validation automatique.
+                    </p>
 
-                  {progress && progress.attempts > 0 && (
-                    <div className="bg-secondary/50 rounded-lg p-3 space-y-2">
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-muted-foreground">Meilleur score</span>
-                        <div className="flex items-center gap-1">
-                          <Star className={cn('w-4 h-4', scorePercentage >= 70 ? 'text-yellow-400 fill-yellow-400' : 'text-muted-foreground')} />
-                          <span className={cn('font-bold', scorePercentage >= 70 ? 'text-green-400' : 'text-foreground')}>
-                            {progress.bestScore}/{progress.maxScore}
-                          </span>
+                    <div className="max-w-md mx-auto bg-card border border-border rounded-lg p-4 space-y-3">
+                        <div className="flex items-center justify-between text-sm">
+                            <div className="flex items-center gap-2">
+                                <Trophy className="w-4 h-4 text-primary" />
+                                <span className="text-foreground font-medium">Progression Terminal</span>
+                            </div>
+                            <span className="text-muted-foreground">
+                                {terminalStats.completedCount}/{terminalStats.totalExercises} exercices
+                            </span>
                         </div>
-                      </div>
-                      <Progress value={scorePercentage} className={cn('h-1.5', scorePercentage >= 70 && '[&>div]:bg-green-500')} />
+                        <Progress value={(terminalStats.completedCount / terminalStats.totalExercises) * 100} className="h-2" />
                     </div>
-                  )}
+                </div>
 
-                  <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                    <span>{exercise.tasks.length} taches</span>
-                    <span>{exercise.estimatedTime} min</span>
-                    <Badge variant="outline" className="text-xs">
-                      {exercise.os === 'both' ? 'Win/Linux' : exercise.os}
-                    </Badge>
-                  </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {terminalExercises.map((exercise) => {
+                        const progress = getExerciseProgress(exercise.id);
+                        const unlocked = exercise.number === 1 ||
+                            terminalExercises.some(ex =>
+                                ex.number === exercise.number - 1 &&
+                                getExerciseProgress(ex.id)?.completed
+                            );
+                        const scorePercentage = progress ? Math.round((progress.bestScore / progress.maxScore) * 100) : 0;
 
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    disabled={!unlocked}
-                    className={cn(
-                      'w-full justify-between',
-                      unlocked ? 'text-primary hover:text-primary hover:bg-primary/10' : 'text-muted-foreground'
-                    )}
-                  >
-                    {!unlocked ? (
-                      <span className="flex items-center gap-1">
-                        <Lock className="w-3 h-3" />
-                        Validez l'exercice {exercise.number - 1}
-                      </span>
-                    ) : progress?.completed ? (
-                      <>Refaire l'exercice<ChevronRight className="w-4 h-4" /></>
-                    ) : (
-                      <>Commencer<ChevronRight className="w-4 h-4" /></>
-                    )}
-                  </Button>
-                </CardContent>
-              </Card>
-            );
-          })}
+                        return (
+                            <Card
+                                key={exercise.id}
+                                className={cn(
+                                    'border transition-all duration-200',
+                                    unlocked
+                                        ? 'bg-card border-border hover:border-primary/50 cursor-pointer group'
+                                        : 'bg-muted/30 border-border/50 cursor-not-allowed opacity-60'
+                                )}
+                                onClick={() => unlocked && onSelect(exercise)}
+                            >
+                                <CardHeader className="pb-3">
+                                    <div className="flex items-start justify-between gap-2">
+                                        <div className="flex items-center gap-2">
+                                            <div
+                                                className={cn(
+                                                    'w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold',
+                                                    progress?.completed
+                                                        ? 'bg-green-500/20 text-green-400'
+                                                        : unlocked
+                                                            ? 'bg-primary/20 text-primary'
+                                                            : 'bg-muted text-muted-foreground'
+                                                )}
+                                            >
+                                                {progress?.completed ? (
+                                                    <CheckCircle2 className="w-5 h-5" />
+                                                ) : unlocked ? (
+                                                    exercise.number
+                                                ) : (
+                                                    <Lock className="w-4 h-4" />
+                                                )}
+                                            </div>
+                                            <CardTitle className={cn(
+                                                'text-lg transition-colors',
+                                                unlocked ? 'text-foreground group-hover:text-primary' : 'text-muted-foreground'
+                                            )}>
+                                                {exercise.title}
+                                            </CardTitle>
+                                        </div>
+                                    </div>
+                                    <div className="flex gap-2 ml-10">
+                                        <Badge variant="outline" className={difficultyColors[exercise.difficulty]}>
+                                            {exercise.difficulty}
+                                        </Badge>
+                                        <Badge variant="secondary">
+                                            {categoryLabels[exercise.category]}
+                                        </Badge>
+                                    </div>
+                                </CardHeader>
+                                <CardContent className="space-y-4">
+                                    <CardDescription className="text-muted-foreground line-clamp-2">
+                                        {exercise.description}
+                                    </CardDescription>
+
+                                    {progress && progress.attempts > 0 && (
+                                        <div className="bg-secondary/50 rounded-lg p-3 space-y-2">
+                                            <div className="flex items-center justify-between text-sm">
+                                                <span className="text-muted-foreground">Meilleur score</span>
+                                                <div className="flex items-center gap-1">
+                                                    <Star className={cn('w-4 h-4', scorePercentage >= 70 ? 'text-yellow-400 fill-yellow-400' : 'text-muted-foreground')} />
+                                                    <span className={cn('font-bold', scorePercentage >= 70 ? 'text-green-400' : 'text-foreground')}>
+                                                        {progress.bestScore}/{progress.maxScore}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <Progress value={scorePercentage} className={cn('h-1.5', scorePercentage >= 70 && '[&>div]:bg-green-500')} />
+                                        </div>
+                                    )}
+
+                                    <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                                        <span>{exercise.tasks.length} taches</span>
+                                        <span>{exercise.estimatedTime} min</span>
+                                        <Badge variant="outline" className="text-xs">
+                                            {exercise.os === 'both' ? 'Win/Linux' : exercise.os}
+                                        </Badge>
+                                    </div>
+
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        disabled={!unlocked}
+                                        className={cn(
+                                            'w-full justify-between',
+                                            unlocked ? 'text-primary hover:text-primary hover:bg-primary/10' : 'text-muted-foreground'
+                                        )}
+                                    >
+                                        {!unlocked ? (
+                                            <span className="flex items-center gap-1">
+                                                <Lock className="w-3 h-3" />
+                                                Validez l'exercice {exercise.number - 1}
+                                            </span>
+                                        ) : progress?.completed ? (
+                                            <>Refaire l'exercice<ChevronRight className="w-4 h-4" /></>
+                                        ) : (
+                                            <>Commencer<ChevronRight className="w-4 h-4" /></>
+                                        )}
+                                    </Button>
+                                </CardContent>
+                            </Card>
+                        );
+                    })}
+                </div>
+            </div>
         </div>
-      </div>
-    </div>
-  );
+    );
 }
 
 // Exercise Workspace Component
-function ExerciseWorkspace({ 
-  exercise, 
-  onBack,
-  onComplete 
-}: { 
-  exercise: TerminalExercise; 
-  onBack: () => void;
-  onComplete: (score: number) => void;
+function ExerciseWorkspace({
+    exercise,
+    onBack,
+    onComplete
+}: {
+    exercise: TerminalExercise;
+    onBack: () => void;
+    onComplete: (score: number) => void;
 }) {
   const [commandHistory, setCommandHistory] = useState<{ command: string; output: string }[]>([]);
   const [currentCommand, setCurrentCommand] = useState('');
@@ -620,7 +611,7 @@ function ExerciseWorkspace({
         }
       }
     }
-  }, [currentTask, currentTaskIndex, exercise.tasks.length, totalScore, onComplete]);
+  }, [currentTask, currentTaskIndex, exercise.tasks.length, totalScore, onComplete, taskResults]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
@@ -847,71 +838,71 @@ function ExerciseWorkspace({
 
         {/* Terminal */}
         <div className="flex-1 flex flex-col bg-[#0a0a0a] min-w-0">
-          <div className="h-8 bg-[#1a1a1a] border-b border-[#333] flex items-center px-3 gap-2 shrink-0">
-            <div className="w-3 h-3 rounded-full bg-red-500" />
-            <div className="w-3 h-3 rounded-full bg-yellow-500" />
-            <div className="w-3 h-3 rounded-full bg-green-500" />
-            <span className="ml-2 text-xs text-gray-400">Terminal - Exercice {exercise.number}</span>
-          </div>
+            <div className="h-8 bg-[#1a1a1a] border-b border-[#333] flex items-center px-3 gap-2 shrink-0">
+                <div className="w-3 h-3 rounded-full bg-red-500" />
+                <div className="w-3 h-3 rounded-full bg-yellow-500" />
+                <div className="w-3 h-3 rounded-full bg-green-500" />
+                <span className="ml-2 text-xs text-gray-400">Terminal - Exercice {exercise.number}</span>
+            </div>
 
-          <ScrollArea className="flex-1" ref={scrollRef}>
-            <div className="font-mono text-sm space-y-1 p-4">
-              <div className="text-green-400">
-                NetSim Terminal v1.0 - Exercice: {exercise.title}
-              </div>
-              <div className="text-gray-500">Tapez vos commandes ci-dessous. Tapez 'help' pour l'aide.</div>
-              <div className="text-gray-500 mb-4">---</div>
+            <ScrollArea className="flex-1 p-4" ref={scrollRef}>
+                <div className="font-mono text-sm space-y-1">
+                    <div className="text-green-400">
+                        NetSim Terminal v1.0 - Exercice: {exercise.title}
+                    </div>
+                    <div className="text-gray-500">Tapez vos commandes ci-dessous. Tapez 'help' pour l'aide.</div>
+                    <div className="text-gray-500 mb-4">---</div>
 
-              {commandHistory.map((entry, index) => (
-                <div key={index} className="mb-2">
-                  <div className="flex items-center gap-2">
+                    {commandHistory.map((entry, index) => (
+                        <div key={index} className="mb-2">
+                            <div className="flex items-center gap-2">
+                                <span className="text-green-400">user@netsim</span>
+                                <span className="text-gray-500">:</span>
+                                <span className="text-blue-400">~</span>
+                                <span className="text-gray-500">$</span>
+                                <span className="text-white">{entry.command}</span>
+                            </div>
+                            <pre className="text-gray-300 whitespace-pre-wrap ml-0 mt-1">{entry.output}</pre>
+                        </div>
+                    ))}
+
+                    {isCompleted && (
+                        <div className="mt-6 p-4 border border-green-500/50 rounded bg-green-500/10">
+                            <div className="text-green-400 font-semibold mb-2">✓ Exercice validé!</div>
+                            <div className="text-green-400 text-sm">
+                                Score final: {totalScore}/{exercise.maxScore} points
+                            </div>
+                            <div className="text-gray-400 text-xs mt-2">Vous pouvez retourner à la liste des exercices.</div>
+                        </div>
+                    )}
+                </div>
+            </ScrollArea>
+
+            <div
+                className={cn(
+                    "border-t border-[#333] p-4 shrink-0",
+                    isCompleted && "opacity-50 pointer-events-none"
+                )}
+                onClick={() => inputRef.current?.focus()}
+            >
+                <div className="flex items-center gap-2 font-mono text-sm">
                     <span className="text-green-400">user@netsim</span>
                     <span className="text-gray-500">:</span>
                     <span className="text-blue-400">~</span>
                     <span className="text-gray-500">$</span>
-                    <span className="text-white">{entry.command}</span>
-                  </div>
-                  <pre className="text-gray-300 whitespace-pre-wrap ml-0 mt-1">{entry.output}</pre>
+                    <input
+                        ref={inputRef}
+                        type="text"
+                        value={currentCommand}
+                        onChange={(e) => setCurrentCommand(e.target.value)}
+                        onKeyDown={handleKeyDown}
+                        disabled={isCompleted}
+                        className="flex-1 bg-transparent text-white outline-none disabled:opacity-50"
+                        placeholder={isCompleted ? "Exercice complété" : "Tapez une commande..."}
+                        autoFocus
+                    />
                 </div>
-              ))}
-
-              {isCompleted && (
-                <div className="mt-6 p-4 border border-green-500/50 rounded bg-green-500/10">
-                  <div className="text-green-400 font-semibold mb-2">✓ Exercice validé!</div>
-                  <div className="text-green-400 text-sm">
-                    Score final: {totalScore}/{exercise.maxScore} points
-                  </div>
-                  <div className="text-gray-400 text-xs mt-2">Vous pouvez retourner à la liste des exercices.</div>
-                </div>
-              )}
             </div>
-          </ScrollArea>
-
-          <div 
-            className={cn(
-              "border-t border-[#333] p-4 shrink-0",
-              isCompleted && "opacity-50 pointer-events-none"
-            )}
-            onClick={() => inputRef.current?.focus()}
-          >
-            <div className="flex items-center gap-2 font-mono text-sm">
-              <span className="text-green-400">user@netsim</span>
-              <span className="text-gray-500">:</span>
-              <span className="text-blue-400">~</span>
-              <span className="text-gray-500">$</span>
-              <input
-                ref={inputRef}
-                type="text"
-                value={currentCommand}
-                onChange={(e) => setCurrentCommand(e.target.value)}
-                onKeyDown={handleKeyDown}
-                disabled={isCompleted}
-                className="flex-1 bg-transparent text-white outline-none disabled:opacity-50"
-                placeholder={isCompleted ? "Exercice complété" : "Tapez une commande..."}
-                autoFocus
-              />
-            </div>
-          </div>
         </div>
       </div>
 
@@ -935,25 +926,25 @@ function ExerciseWorkspace({
 
 // Main Page Component
 export default function TerminalExercisesPage() {
-  const [selectedExercise, setSelectedExercise] = useState<TerminalExercise | null>(null);
-  const { user } = useAuth();
-  const { updateExerciseScore } = useTerminalProgress();
+    const [selectedExercise, setSelectedExercise] = useState<TerminalExercise | null>(null);
+    const { user } = useAuth();
+    const { updateExerciseScore } = useTerminalProgress();
 
-  const handleComplete = (score: number) => {
-    if (selectedExercise && user) {
-      updateExerciseScore(selectedExercise.id, score, selectedExercise.maxScore);
+    const handleComplete = (score: number) => {
+        if (selectedExercise && user) {
+            updateExerciseScore(selectedExercise.id, score, selectedExercise.maxScore);
+        }
+    };
+
+    if (!selectedExercise) {
+        return <ExerciseSelector onSelect={setSelectedExercise} />;
     }
-  };
 
-  if (!selectedExercise) {
-    return <ExerciseSelector onSelect={setSelectedExercise} />;
-  }
-
-  return (
-    <ExerciseWorkspace
-      exercise={selectedExercise}
-      onBack={() => setSelectedExercise(null)}
-      onComplete={handleComplete}
-    />
-  );
+    return (
+        <ExerciseWorkspace
+            exercise={selectedExercise}
+            onBack={() => setSelectedExercise(null)}
+            onComplete={handleComplete}
+        />
+    );
 }
