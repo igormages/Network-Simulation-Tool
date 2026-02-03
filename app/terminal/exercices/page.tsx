@@ -837,7 +837,7 @@ function ExerciseWorkspace({
         </div>
 
         {/* Terminal */}
-        <div className="flex-1 flex flex-col bg-[#0a0a0a] min-w-0 overflow-hidden">
+        <div className="flex-1 flex flex-col bg-[#0a0a0a] min-w-0">
           <div className="h-8 bg-[#1a1a1a] border-b border-[#333] flex items-center px-3 gap-2 shrink-0">
             <div className="w-3 h-3 rounded-full bg-red-500" />
             <div className="w-3 h-3 rounded-full bg-yellow-500" />
