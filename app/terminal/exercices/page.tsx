@@ -587,20 +587,10 @@ function ExerciseWorkspace({
     if (currentTask) {
       const normalizedCmd = cmd.trim().toLowerCase();
       
-      console.log("[v0] Commande entrée:", normalizedCmd);
-      console.log("[v0] Commandes attendues:", currentTask.expectedCommands);
-      console.log("[v0] Task ID:", currentTask.id);
-      
       const isCorrect = currentTask.expectedCommands.some(expected => {
         const normalizedExpected = expected.toLowerCase();
-        const exactMatch = normalizedCmd === normalizedExpected;
-        const startsWithMatch = normalizedCmd.startsWith(normalizedExpected);
-        console.log("[v0] Comparaison:", normalizedCmd, "vs", normalizedExpected, "| exact:", exactMatch, "| startsWith:", startsWithMatch);
-        return exactMatch || startsWithMatch;
+        return normalizedCmd === normalizedExpected || normalizedCmd.startsWith(normalizedExpected);
       });
-      
-      console.log("[v0] isCorrect:", isCorrect);
-      console.log("[v0] taskResults actuels:", taskResults);
 
       if (isCorrect) {
         // Check if task is not already completed
