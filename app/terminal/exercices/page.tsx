@@ -651,69 +651,17 @@ function ExerciseWorkspace({
       </header>
 
       <div className="flex-1 flex overflow-hidden">
-        {/* Left panel - Instructions, Leaderboard, Theory and Tasks */}
+        {/* Left panel - Tasks and Theory at top, Instructions and Leaderboard at bottom */}
         <div className="w-80 border-r border-border flex flex-col shrink-0 overflow-hidden">
-          <ScrollArea className="flex-1">
-            <div className="p-4 space-y-6">
-              {/* Instructions */}
-              <Card className="bg-secondary/30 border-border">
-                <CardHeader className="pb-2">
-                  <CardTitle className="flex items-center gap-2 text-sm">
-                    <Lightbulb className="w-4 h-4 text-yellow-500" />
-                    Instructions
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <div className="flex gap-2">
-                    <div className="flex-shrink-0">
-                      <div className="flex items-center justify-center w-5 h-5 rounded-full bg-primary/20 text-primary text-xs font-bold">
-                        1
-                      </div>
-                    </div>
-                    <div>
-                      <p className="text-xs font-medium text-foreground">Lisez la tâche</p>
-                      <p className="text-[11px] text-muted-foreground">Comprenez ce qui est demandé</p>
-                    </div>
-                  </div>
-                  <div className="flex gap-2">
-                    <div className="flex-shrink-0">
-                      <div className="flex items-center justify-center w-5 h-5 rounded-full bg-primary/20 text-primary text-xs font-bold">
-                        2
-                      </div>
-                    </div>
-                    <div>
-                      <p className="text-xs font-medium text-foreground">Saisissez la commande</p>
-                      <p className="text-[11px] text-muted-foreground">Dans le terminal ci-dessous</p>
-                    </div>
-                  </div>
-                  <div className="flex gap-2">
-                    <div className="flex-shrink-0">
-                      <div className="flex items-center justify-center w-5 h-5 rounded-full bg-primary/20 text-primary text-xs font-bold">
-                        3
-                      </div>
-                    </div>
-                    <div>
-                      <p className="text-xs font-medium text-foreground">Validez votre réponse</p>
-                      <p className="text-[11px] text-muted-foreground">Accumulez des points</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Leaderboard */}
-              <Leaderboard />
-            </div>
-          </ScrollArea>
-
-          {/* Tabs for Tasks and Theory */}
-          <Tabs defaultValue="tasks" className="flex-1 flex flex-col border-t border-border">
+          {/* Tabs for Tasks and Theory - NOW AT TOP */}
+          <Tabs defaultValue="tasks" className="flex-1 flex flex-col border-b border-border overflow-hidden">
             <TabsList className="w-full rounded-none border-b border-border">
               <TabsTrigger value="tasks" className="flex-1">Taches</TabsTrigger>
               <TabsTrigger value="theory" className="flex-1">Theorie</TabsTrigger>
             </TabsList>
             <TabsContent value="tasks" className="flex-1 m-0 overflow-hidden">
-              <ScrollArea className="h-full">
-                <div className="p-4 space-y-4">
+              <ScrollArea className="h-full w-full">
+                <div className="p-4 space-y-4 w-full">
                   {exercise.tasks.map((task, index) => {
                     const result = taskResults.find(r => r.taskId === task.id);
                     const isCurrent = index === currentTaskIndex;
@@ -784,22 +732,12 @@ function ExerciseWorkspace({
                       </div>
                     );
                   })}
-
-                  {isCompleted && (
-                    <div className="p-4 bg-green-500/10 border border-green-500/30 rounded-lg text-center space-y-2">
-                      <Trophy className="w-8 h-8 text-green-400 mx-auto" />
-                      <p className="font-semibold text-green-400">Exercice termine!</p>
-                      <p className="text-sm text-muted-foreground">
-                        Score final: {totalScore}/{exercise.maxScore}
-                      </p>
-                    </div>
-                  )}
                 </div>
               </ScrollArea>
             </TabsContent>
             <TabsContent value="theory" className="flex-1 m-0 overflow-hidden">
-              <ScrollArea className="h-full">
-                <div className="p-4 space-y-4">
+              <ScrollArea className="h-full w-full">
+                <div className="p-4 space-y-4 w-full">
                   {exercise.theory.map((section, index) => (
                     <div key={index} className="space-y-2">
                       <h3 className="font-semibold text-foreground flex items-center gap-2">
@@ -825,6 +763,59 @@ function ExerciseWorkspace({
               </ScrollArea>
             </TabsContent>
           </Tabs>
+
+          {/* Instructions and Leaderboard - NOW AT BOTTOM */}
+          <ScrollArea className="flex-1 w-full border-t border-border">
+            <div className="p-4 space-y-6 w-full">
+              {/* Instructions */}
+              <Card className="bg-secondary/30 border-border">
+                <CardHeader className="pb-2">
+                  <CardTitle className="flex items-center gap-2 text-sm">
+                    <Lightbulb className="w-4 h-4 text-yellow-500" />
+                    Instructions
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="flex gap-2">
+                    <div className="flex-shrink-0">
+                      <div className="flex items-center justify-center w-5 h-5 rounded-full bg-primary/20 text-primary text-xs font-bold">
+                        1
+                      </div>
+                    </div>
+                    <div>
+                      <p className="text-xs font-medium text-foreground">Lisez la tâche</p>
+                      <p className="text-[11px] text-muted-foreground">Comprenez ce qui est demandé</p>
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <div className="flex-shrink-0">
+                      <div className="flex items-center justify-center w-5 h-5 rounded-full bg-primary/20 text-primary text-xs font-bold">
+                        2
+                      </div>
+                    </div>
+                    <div>
+                      <p className="text-xs font-medium text-foreground">Saisissez la commande</p>
+                      <p className="text-[11px] text-muted-foreground">Dans le terminal ci-dessous</p>
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <div className="flex-shrink-0">
+                      <div className="flex items-center justify-center w-5 h-5 rounded-full bg-primary/20 text-primary text-xs font-bold">
+                        3
+                      </div>
+                    </div>
+                    <div>
+                      <p className="text-xs font-medium text-foreground">Validez votre réponse</p>
+                      <p className="text-[11px] text-muted-foreground">Accumulez des points</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Leaderboard */}
+              <Leaderboard />
+            </div>
+          </ScrollArea>
         </div>
 
         {/* Terminal */}
