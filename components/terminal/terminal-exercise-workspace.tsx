@@ -60,6 +60,34 @@ export function TerminalExerciseWorkspace({
     const baseCmd = input.toLowerCase().split(' ')[0];
     const args = input.substring(baseCmd.length).trim();
 
+    // IMPORTANT: Vérifier si la commande correspond à une tâche AVANT de traiter la commande
+    // Cela permet de valider les tâches même si la commande est reconnue
+    for (const task of exercise.tasks) {
+      if (!completedTasks[task.id]?.completed) {
+        const normalizedInput = input.toLowerCase().trim();
+        const matches = task.expectedCommands.some(cmd => {
+          const normalizedCmd = cmd.toLowerCase().trim();
+          // Vérifier si la commande entrée correspond exactement ou commence par la commande attendue
+          return normalizedInput === normalizedCmd || normalizedInput.startsWith(normalizedCmd + ' ') || normalizedInput.startsWith(normalizedCmd);
+        });
+        
+        if (matches) {
+          setCompletedTasks(prev => ({
+            ...prev,
+            [task.id]: { completed: true, points: task.points, command: input }
+          }));
+          
+          // Move to next uncompleted task
+          const nextIndex = exercise.tasks.findIndex((t, idx) => idx > currentTaskIndex && !completedTasks[t.id]?.completed);
+          if (nextIndex !== -1) {
+            setCurrentTaskIndex(nextIndex);
+          }
+          setShowHint(false);
+          break; // Une seule tâche peut être validée par commande
+        }
+      }
+    }
+
     if (baseCmd === 'help' || baseCmd === 'h') {
       return `Commandes disponibles :
     
@@ -199,32 +227,6 @@ Address: 142.251.41.14`;
 
     if (baseCmd === 'ls') {
       return `Desktop  Documents  Downloads  Pictures  Videos`;
-    }
-
-    // Check if command matches any task
-    for (const task of exercise.tasks) {
-      if (!completedTasks[task.id]?.completed) {
-        const matches = task.expectedCommands.some(cmd => 
-          input.toLowerCase().includes(cmd.toLowerCase())
-        );
-        
-        if (matches) {
-          setCompletedTasks(prev => ({
-            ...prev,
-            [task.id]: { completed: true, points: task.points, command: input }
-          }));
-          
-          // Move to next uncompleted task
-          for (let i = currentTaskIndex + 1; i < exercise.tasks.length; i++) {
-            if (!completedTasks[exercise.tasks[i].id]?.completed) {
-              setCurrentTaskIndex(i);
-              break;
-            }
-          }
-          
-          return task.successMessage || 'Commande exécutée avec succès!';
-        }
-      }
     }
 
     return `Commande '${baseCmd}' exécutée avec succès.`;
