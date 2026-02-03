@@ -546,11 +546,13 @@ function ExerciseSelector({ onSelect }: { onSelect: (ex: TerminalExercise) => vo
 function ExerciseWorkspace({ 
   exercise, 
   onBack,
-  onComplete 
+  onComplete,
+  onTaskComplete 
 }: { 
   exercise: TerminalExercise; 
   onBack: () => void;
   onComplete: (score: number) => void;
+  onTaskComplete?: (score: number) => void;
 }) {
   const [commandHistory, setCommandHistory] = useState<{ command: string; output: string }[]>([]);
   const [currentCommand, setCurrentCommand] = useState('');
@@ -602,25 +604,32 @@ function ExerciseWorkspace({
           };
           setTaskResults(prev => [...prev, newResult]);
           
+          // Calculer le nouveau score
+          const newScore = totalScore + currentTask.points;
+          
           // Add success message to terminal output
           setCommandHistory(prev => [...prev, { 
             command: '', 
             output: `\n✓ Tâche ${currentTaskIndex + 1} complétée ! +${currentTask.points} points\n` 
           }]);
           
+          // Sauvegarder la progression après chaque tâche validée
+          if (onTaskComplete) {
+            onTaskComplete(newScore);
+          }
+          
           if (currentTaskIndex < exercise.tasks.length - 1) {
             setCurrentTaskIndex(prev => prev + 1);
             setShowHint(false);
           } else {
             // Exercise completed
-            const finalScore = totalScore + currentTask.points;
             setIsCompleted(true);
-            onComplete(finalScore);
+            onComplete(newScore);
           }
         }
       }
     }
-  }, [currentTask, currentTaskIndex, exercise.tasks.length, totalScore, onComplete, taskResults]);
+  }, [currentTask, currentTaskIndex, exercise.tasks.length, totalScore, onComplete, onTaskComplete, taskResults]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
@@ -930,7 +939,8 @@ export default function TerminalExercisesPage() {
   const { user } = useAuth();
   const { updateExerciseScore } = useTerminalProgress();
 
-  const handleComplete = (score: number) => {
+  // Appelé à chaque tâche validée pour sauvegarder la progression en temps réel
+  const handleScoreUpdate = (score: number) => {
     if (selectedExercise && user) {
       updateExerciseScore(selectedExercise.id, score, selectedExercise.maxScore);
     }
@@ -944,7 +954,8 @@ export default function TerminalExercisesPage() {
     <ExerciseWorkspace
       exercise={selectedExercise}
       onBack={() => setSelectedExercise(null)}
-      onComplete={handleComplete}
+      onComplete={handleScoreUpdate}
+      onTaskComplete={handleScoreUpdate}
     />
   );
 }
